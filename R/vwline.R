@@ -41,9 +41,19 @@ checkvwline <- function(x, y, w) {
 
 buildEdge <- function(join, 
                       perpStart, perpEnd, inside, mitrelen, mitrelimit,
-                      intpt1, intpt2, arc, linejoin, leftedge) {
+                      intpt1, intpt2, arc, linejoin, open, leftedge) {
     N <- length(perpStart)
-    x <- vector("list", N+1)
+    if (open) {
+        ## Edges on open lines start with first vertex, generate
+        ## edges between vertex i and vertex i+1 (possibly including corners),
+        ## and end with last vertex.
+        x <- vector("list", N+1)
+    } else {
+        ## Edges on closed lines start with first vertex and generate
+        ## edges between vertex i and vertex i+1 (possibly including corners)
+        ## and the the last edge ends back at the first vertex.
+        x <- vector("list", N)
+    }
     x[[1]] <- perpStart[1]
     if (N > 1) {
         for (i in 1:(N-1)) {
@@ -53,7 +63,13 @@ buildEdge <- function(join,
                 switch(linejoin,
                        round=
                            {
-                               if (leftedge) {
+                               ## For open lines, we travel forwards
+                               ## along left edge and backwards along
+                               ## right edge.
+                               ## For closed lines, we travel forwards
+                               ## for both edges; vwlinePoints() reverses
+                               ## the right edge after this build.
+                               if (leftedge || !open) {
                                    x[[i+1]] <- c(perpEnd[i], arc[[i]],
                                                  perpStart[i+1])
                                } else {
@@ -79,11 +95,21 @@ buildEdge <- function(join,
             }
         }
     }
-    x[[N+1]] <- perpEnd[N]
+    ## Only need to add the final vertex for open lines.
+    if (open) {
+        x[[N+1]] <- perpEnd[N]
+    }
     unlist(x)
 }
 
-## Calculate points to the left and to the right
+## Calculate points to the left and to the right.
+## This works quite differently for open versus closed lines.
+## For open lines, we start with the left edge and travel forwards
+## (possibly adding corners), then we build the right edge travelling
+## backwards.  The two edges are open and line ends are added later.
+## For closed lines, we build the left edge travelling forwards,
+## then build the right edge also travelling forwards, but we reverse
+## the resulting edge (so that filling works).  The two edges are closed.
 vwlinePoints <- function(grob) {
     x <- convertX(grob$x, "in", valueOnly=TRUE)
     y <- convertY(grob$y, "in", valueOnly=TRUE)
@@ -95,46 +121,86 @@ vwlinePoints <- function(grob) {
     sinfo <- segInfo(x, y, w, grob$open, grob$stepWidth, grob$debug)
     cinfo <- cornerInfo(sinfo, grob$open, grob$stepWidth, grob$debug)
     carcinfo <- cornerArcInfo(sinfo, cinfo, grob$open, grob$debug)
-    if (!grob$open) {
+    if (grob$open) {
+        leftx <- buildEdge(x, 
+                           sinfo$perpStartLeftX,
+                           sinfo$perpEndLeftX,
+                           cinfo$leftInside,
+                           cinfo$leftMitreLength, grob$mitrelimit,
+                           cinfo$leftIntx1,
+                           cinfo$leftIntx2,
+                           carcinfo$leftarcx,
+                           grob$linejoin, grob$open, TRUE)
+        lefty <- buildEdge(y,
+                           sinfo$perpStartLeftY,
+                           sinfo$perpEndLeftY,
+                           cinfo$leftInside,
+                           cinfo$leftMitreLength, grob$mitrelimit,
+                           cinfo$leftInty1,
+                           cinfo$leftInty2,
+                           carcinfo$leftarcy,
+                           grob$linejoin, grob$open, TRUE)
+        rightx <- buildEdge(rev(x),
+                            rev(sinfo$perpEndRightX),
+                            rev(sinfo$perpStartRightX),
+                            rev(cinfo$rightInside),
+                            rev(cinfo$rightMitreLength), grob$mitrelimit,
+                            rev(cinfo$rightIntx2),
+                            rev(cinfo$rightIntx1),
+                            rev(carcinfo$rightarcx),
+                            grob$linejoin, grob$open, FALSE)
+        righty <- buildEdge(rev(y),
+                            rev(sinfo$perpEndRightY),
+                            rev(sinfo$perpStartRightY),
+                            rev(cinfo$rightInside),
+                            rev(cinfo$rightMitreLength), grob$mitrelimit,
+                            rev(cinfo$rightInty2),
+                            rev(cinfo$rightInty1),
+                            rev(carcinfo$rightarcy),
+                            grob$linejoin, grob$open, FALSE)
+    } else {
+        ## Recycle the first vertex so that we can calculate any final
+        ## corners (from the last vertex to the first vertex).
         x <- c(x, x[1])
         y <- c(y, y[1])
+        sinfo <- rbind(sinfo, sinfo[1, ])
+        leftx <- buildEdge(x, 
+                           sinfo$perpStartLeftX,
+                           sinfo$perpEndLeftX,
+                           cinfo$leftInside,
+                           cinfo$leftMitreLength, grob$mitrelimit,
+                           cinfo$leftIntx1,
+                           cinfo$leftIntx2,
+                           carcinfo$leftarcx,
+                           grob$linejoin, grob$open, TRUE)
+        lefty <- buildEdge(y,
+                           sinfo$perpStartLeftY,
+                           sinfo$perpEndLeftY,
+                           cinfo$leftInside,
+                           cinfo$leftMitreLength, grob$mitrelimit,
+                           cinfo$leftInty1,
+                           cinfo$leftInty2,
+                           carcinfo$leftarcy,
+                           grob$linejoin, grob$open, TRUE)
+        rightx <- rev(buildEdge(x,
+                                sinfo$perpStartRightX,
+                                sinfo$perpEndRightX,
+                                cinfo$rightInside,
+                                cinfo$rightMitreLength, grob$mitrelimit,
+                                cinfo$rightIntx2,
+                                cinfo$rightIntx1,
+                                carcinfo$rightarcx,
+                                grob$linejoin, grob$open, FALSE))
+        righty <- rev(buildEdge(y,
+                                sinfo$perpStartRightY,
+                                sinfo$perpEndRightY,
+                                cinfo$rightInside,
+                                cinfo$rightMitreLength, grob$mitrelimit,
+                                cinfo$rightInty2,
+                                cinfo$rightInty1,
+                                carcinfo$rightarcy,
+                                grob$linejoin, grob$open, FALSE))
     }
-    leftx <- buildEdge(x, 
-                       sinfo$perpStartLeftX,
-                       sinfo$perpEndLeftX,
-                       cinfo$leftInside,
-                       cinfo$leftMitreLength, grob$mitrelimit,
-                       cinfo$leftIntx1,
-                       cinfo$leftIntx2,
-                       carcinfo$leftarcx,
-                       grob$linejoin, TRUE)
-    lefty <- buildEdge(y,
-                       sinfo$perpStartLeftY,
-                       sinfo$perpEndLeftY,
-                       cinfo$leftInside,
-                       cinfo$leftMitreLength, grob$mitrelimit,
-                       cinfo$leftInty1,
-                       cinfo$leftInty2,
-                       carcinfo$leftarcy,
-                       grob$linejoin, TRUE)
-    rightx <- buildEdge(rev(x),
-                        rev(sinfo$perpEndRightX),
-                        rev(sinfo$perpStartRightX),
-                        rev(cinfo$rightInside),
-                        rev(cinfo$rightMitreLength), grob$mitrelimit,
-                        rev(cinfo$rightIntx2),
-                        rev(cinfo$rightIntx1),
-                        rev(carcinfo$rightarcx),
-                        grob$linejoin, FALSE)
-    righty <- buildEdge(rev(y),
-                        rev(sinfo$perpEndRightY),
-                        rev(sinfo$perpStartRightY),
-                        rev(cinfo$rightInside),
-                        rev(cinfo$rightMitreLength), grob$mitrelimit,
-                        rev(cinfo$rightInty2),
-                        rev(cinfo$rightInty1),
-                        rev(carcinfo$rightarcy),
-                        grob$linejoin, FALSE)
     list(left=list(x=leftx, y=lefty),
          right=list(x=rightx, y=righty),
          sinfo=sinfo)

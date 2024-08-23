@@ -1,4 +1,4 @@
-1a6070406498af3846ecc67d52b6ffb3 *DESCRIPTION
+41c39cd7c7230e09675a001bc27c9e0b *DESCRIPTION
 7a2c826572a3b82c2f5d0b2c4092befd *NAMESPACE
 42015cf50c27f66eeaa1cdfc27a36171 *R/brush.R
 9c201f44cf2ea3e3556d2c4ce6f1e345 *R/brushline.R
@@ -6,7 +6,7 @@
 4a0f1472af6fdc9c61d4b15d5a4f938b *R/debug.R
 de450dd4406024bef16973e8b437cd98 *R/distance.R
 52e8fbe1b8c1e48d8a523e7c5065476e *R/edge.R
-d6f1c75d11d04dc88aab8a8af9e56270 *R/endsjoins.R
+6fb4a1f62646ee51051fe4504a3101f3 *R/endsjoins.R
 f930f7905bb12c1f7debdaa6138ac6c9 *R/extend.R
 6367c89994d45b98e31010235bfad208 *R/offsetbezier.R
 b415bf34409fe4a122d3e4e67b49e03a *R/offsetxspline.R
@@ -14,7 +14,7 @@ b415bf34409fe4a122d3e4e67b49e03a *R/offsetxspline.R
 85a26bd39b57df487604f5991d8108d8 *R/render.R
 fd548f5de0a3b8985167d11e6b218d96 *R/utils.R
 c471ff7d0cb25cf0861fdcdd24e339d4 *R/vwcurve.R
-81df611d0324549cee991048fd34180b *R/vwline.R
+1b8fbaa264c7409b8e8909c50a57c2fa *R/vwline.R
 d6d789aab748e60876602b3e8cfdf97d *R/vwxspline.R
 ad5b780a18e574f8510f6adb694edf59 *R/width.R
 e6c75ca9a9f41c51da0a571784b5291f *R/xspline.R
@@ -50,7 +50,9 @@ d83aeb742d54c3011b28eaab1df39518 *R/xsplineTangent.s1pos.s2pos.A0.noA3.x.R
 d5c9fb485a264f51df8034ba09ed1be8 *R/xsplineTangent.s1pos.s2pos.noA0.A3.y.R
 77793e67166acefbdeaadeac9283b348 *R/xsplineTangent.s1pos.s2pos.noA0.noA3.x.R
 6212d48a56080518124b1c68662d8981 *R/xsplineTangent.s1pos.s2pos.noA0.noA3.y.R
-1fbd33da103231b98a2be6d633b02856 *inst/NEWS.rd
+1808d4dd212202957dbf9fe6dbd22926 *inst/NEWS.rd
+a012ca4c74aa4eed37ad8bd68834e47b *inst/regression-tests/bug-joins.R
+af95dfd81374019208ede78ebdc4bc45 *inst/regression-tests/bug-joins.save.pdf
 65e45448abe0d2726cb3ea80a6322612 *inst/regression-tests/edges-tests.save.pdf
 002c65b2852b9e2cfb072a7909363621 *inst/regression-tests/edges.R
 3663af69d71a35e9c8b4e1402d7619ff *inst/regression-tests/endsjoins-tests.save.pdf
